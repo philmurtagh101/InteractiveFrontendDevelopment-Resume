@@ -41,7 +41,9 @@ function repoInformationHTML(repos) {
 
 //from html page
 function fetchGitHubInformation(event) {
-
+    //lets clear out what's in the elements of id gh-user-data and gh-repo-data
+    $("#gh-user-data").html("");
+    $("#gh-repo-data").html("");
     var username = $("#gh-username").val();
     // if nothing in username return with a warning between h2 tags.
     if (!username) {
@@ -71,11 +73,20 @@ function fetchGitHubInformation(event) {
         }, function (errorResponse) {
             if (errorResponse.status === 404) {
                 $("#gh-user-data").html(`<h2>No user info for ${username}</h2>`);
+
+            } else if (errorResponse.status === 403) {
+                var resetTime = new Date(errorResponse.getResponseHeader('X-RateLimit-Reset')*1000);
+                $("#gh-user-data").html(`<h4>Too many requests, please wait until ${resetTime.toLocaleTimeString()}</h4>`);
+//403 error means foirbidden is when there are too many requests. So we find the time and express it in local time and display it
+
             } else {
                 console.log(errorResponse);
-                $("gh-user-data").html(
+                $("#gh-user-data").html(
                     `<h2>Error: ${errorResponse.responseJSON.message}</h2>`
                 );
             }
         });
 }
+
+//This automatically ensures that Octocat's profile is automatically loaded before anything else happens i.e. before fetch happens.
+$(document).ready(fetchGitHubInformation);
